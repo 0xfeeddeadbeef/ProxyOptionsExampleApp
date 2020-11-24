@@ -29,6 +29,8 @@
         {
             services.AddControllers();
 
+            services.Configure<MyExampleOptions>(Configuration.GetSection("MyExampleSettings"));
+
             services.AddHttpClient<MyExampleHttpClient>()
                 .ConfigurePrimaryHttpMessageHandler(provider =>
                 {
@@ -49,12 +51,19 @@
                             UseDefaultCredentials = options.ProxyCredentials == null,
                         };
                     }
-                    else
-                    {
-                        httpMessageHandler.UseProxy = false;
-                    }
 
                     return httpMessageHandler;
+                })
+                .ConfigureHttpClient((provider, client) =>
+                {
+                    using var scope = provider.CreateScope();
+
+                    var options = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<MyExampleOptions>>().Value;
+
+                    //
+                    // HTTP სერვისის მისამართი:
+                    //
+                    client.BaseAddress = options.ServiceUrl;
                 });
         }
 
